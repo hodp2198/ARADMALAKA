@@ -9,7 +9,9 @@ const directionButtons = document.querySelectorAll("[data-direction]");
 
 const tileCount = 20;
 const tileSize = board.width / tileCount;
-const tickMs = 130;
+const initialTickMs = 130;
+const minimumTickMs = 65;
+const speedStepMs = 6;
 const storageKey = "classic-snake-best-score";
 
 let snake;
@@ -17,6 +19,7 @@ let direction;
 let nextDirection;
 let food;
 let score;
+let currentTickMs;
 let bestScore = Number(localStorage.getItem(storageKey) || 0);
 let gameLoopId = null;
 let isRunning = false;
@@ -32,6 +35,7 @@ function initGame() {
   direction = { x: 1, y: 0 };
   nextDirection = { x: 1, y: 0 };
   score = 0;
+  currentTickMs = initialTickMs;
   food = spawnFood();
   isRunning = false;
   scoreEl.textContent = "0";
@@ -46,8 +50,7 @@ function startGame() {
 
   isRunning = true;
   statusEl.textContent = "המשחק התחיל.";
-  clearInterval(gameLoopId);
-  gameLoopId = setInterval(step, tickMs);
+  startLoop();
 }
 
 function restartGame() {
@@ -73,6 +76,7 @@ function step() {
   if (willEat) {
     score += 10;
     scoreEl.textContent = String(score);
+    increaseSpeed();
     food = spawnFood();
   } else {
     snake.pop();
@@ -105,6 +109,24 @@ function gameOver() {
   }
 
   statusEl.textContent = "נפסלת. לחץ על התחל מחדש או Space כדי לנסות שוב.";
+}
+
+function startLoop() {
+  clearInterval(gameLoopId);
+  gameLoopId = setInterval(step, currentTickMs);
+}
+
+function increaseSpeed() {
+  const nextTickMs = Math.max(minimumTickMs, currentTickMs - speedStepMs);
+  if (nextTickMs === currentTickMs) {
+    return;
+  }
+
+  currentTickMs = nextTickMs;
+
+  if (isRunning) {
+    startLoop();
+  }
 }
 
 function spawnFood() {
